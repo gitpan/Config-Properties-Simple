@@ -1,5 +1,8 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.04  Wed Apr 9 2003
+	- 'file' defined causes 'optional' to be ignored now
+
 0.03  Wed Apr 9 2003
 	- support added for 'optional' keyword
 
