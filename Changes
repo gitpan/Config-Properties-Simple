@@ -1,5 +1,9 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.09  Oct 10 2003
+	- find now uses options stored from object creation as
+	  defaults, so $cfg->find() returns effectively the filename
+
 0.08  Sep 9 2003
 	- test suite added
 	- require => \@array was not working. Bug reported by Sastry

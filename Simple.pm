@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 use strict;
 use warnings;
@@ -59,6 +59,11 @@ sub new {
     }
 
     return $this;
+}
+
+sub find {
+    my $this=shift;
+    return $this->SUPER::find(%{$this->{simple_opts}}, @_)
 }
 
 sub file_name { shift->{simple_fn} }

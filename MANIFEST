@@ -6,3 +6,4 @@ Simple.pm
 t/1_read.t
 t/example1.props
 t/example2.props
+META.yml                                 Module meta-data (added by MakeMaker)
