@@ -1,5 +1,9 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.06  Mon Apr 14 2003
+	- mode => write equivalent to noread => 1
+	- support for property validation
+
 0.05  Thu Apr 10 2003
 	- default now accepts a HASH ref
 
