@@ -3,4 +3,6 @@ Makefile.PL
 MANIFEST
 README
 Simple.pm
-t/1.t
+t/1_read.t
+t/example1.props
+t/example2.props

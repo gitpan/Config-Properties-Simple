@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 use strict;
 use warnings;
@@ -52,7 +52,8 @@ sub new {
 	    UNIVERSAL::isa($required, 'ARRAY')
 		or croak "invalid object passed for 'required' option, array reference expected";
 	    foreach my $req (@{$required}) {
-		die "required property '$req' not found in $fn";
+		die "required property '$req' not found in $fn"
+		    unless defined $this->getProperty($req);
 	    }
 	}
     }

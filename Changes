@@ -1,5 +1,10 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.08  Sep 9 2003
+	- test suite added
+	- require => \@array was not working. Bug reported by Sastry
+	  Isukapalli
+
 0.07  Wed Apr 16 2003
 	- support for re in validate => \@array array
 	- validate => \@array handled properly

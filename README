@@ -1,5 +1,5 @@
-Config/Properties/Simple version 0.07
-=====================================
+Config/Properties/Simple
+========================
 
 This package provides a simple access to properties configuration
 files mixin functionality in packages Config::Properties and
