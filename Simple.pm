@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use strict;
 use warnings;
@@ -25,8 +25,11 @@ sub new {
     and $this->setFormat($opts{format});
 
   unless ($opts{noread}) {
-    my $fh=$this->open(%opts)
+    my $fh=$this->open(%opts);
+    unless ($fh) {
+      return $this if $opts{optional}
       or croak 'unable to open configuration file for reading';
+    }
     $this->load($fh);
     close $fh
       or croak 'unable to read configuration file';
@@ -97,6 +100,11 @@ C<Config::Properties::new> constructor).
 =item C<noread =E<gt> 1>
 
 stops properties for being read from a file.
+
+=item C<optional =E<gt> 1>
+
+by default an exception is thrown when the configuration can not be
+opened, this option makes the constructor succeed anyway.
 
 =item C<format =E<gt> $format>
 
