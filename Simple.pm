@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use strict;
 use warnings;
@@ -16,7 +16,15 @@ our @ISA=qw(Config::Properties Config::Find);
 sub new {
   my ($class, %opts)=@_;
 
-  my $this=$class->SUPER::new($opts{defaults}, 0);
+  my $defaults;
+  if (defined $opts{defaults}) {
+    $defaults=Config::Properties->new();
+    for my $k (keys %{$opts{defaults}}) {
+      $defaults->setProperty($k, $opts{defaults}->{$k})
+    }
+  }
+
+  my $this=$class->SUPER::new($defaults);
 
   $this->{simple_opts}=\%opts;
 
@@ -94,7 +102,7 @@ The supported ptions are:
 =item C<defaults =E<gt> {...}>
 
 hash reference containing default values for the configuration keys
-(equivalent to C<defaultProperties> field in the original
+(similar to C<defaultProperties> field in the original
 C<Config::Properties::new> constructor).
 
 =item C<noread =E<gt> 1>

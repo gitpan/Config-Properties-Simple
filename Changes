@@ -1,5 +1,8 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.05  Thu Apr 10 2003
+	- default now accepts a HASH ref
+
 0.04  Wed Apr 9 2003
 	- 'file' defined causes 'optional' to be ignored now
 
