@@ -1,5 +1,11 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.07  Wed Apr 16 2003
+	- support for re in validate => \@array array
+	- validate => \@array handled properly
+	- support for required added.
+	- Makefile dependencies updated to working versions
+
 0.06  Mon Apr 14 2003
 	- mode => write equivalent to noread => 1
 	- support for property validation

@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 use strict;
 use warnings;
@@ -31,18 +31,8 @@ sub new {
     exists $opts{format}
 	and $this->setFormat($opts{format});
 
-    my $validate=$opts{validate};
-    if (defined $validate) {
-	if (UNIVERSAL::isa($validate, 'ARRAY')) {
-	    $this->{simple_validate} =
-		map {$_ => 's'} @{$validate}
-	}
-	else {
-	    $this->{simple_validate}=$validate;
-	}
-    }
-
-    unless ($opts{noread} || $opts{mode}=~/^w(?:rite)?/i) {
+    unless ($opts{noread}
+	    or (exists $opts{mode} and $opts{mode}=~/^w(?:rite)?/i)) {
 	my $fn=$this->{simple_fn}=$this->find(%opts);
 	unless (defined $fn) {
 	    return $this if ($opts{optional} and !defined $opts{file})
@@ -56,6 +46,15 @@ sub new {
 	$this->load($fh);
 	close $fh
 	    or croak 'unable to read configuration file';
+
+	my $required=$opts{required};
+	if (defined $required) {
+	    UNIVERSAL::isa($required, 'ARRAY')
+		or croak "invalid object passed for 'required' option, array reference expected";
+	    foreach my $req (@{$required}) {
+		die "required property '$req' not found in $fn";
+	    }
+	}
     }
 
     return $this;
@@ -88,10 +87,22 @@ sub validate {
 	if (UNIVERSAL::isa($vtor, 'CODE')) {
 	    return &$vtor($key, $value, $this);
 	}
-	if (UNIVERSAL::isa($vtor, 'HASH')) {
+	elsif (UNIVERSAL::isa($vtor, 'ARRAY')) {
+	    foreach my $vtor2 (@{$vtor}) {
+		if (UNIVERSAL::isa($vtor2, 'Regexp')) {
+		    return $value if $key=~$vtor2;
+		}
+		else {
+		    return $value if $vtor2 eq $key;
+		}
+	    }
+	    $this->fail("unknow property '$key' found");
+	}
+	elsif (UNIVERSAL::isa($vtor, 'HASH')) {
+	    # warn "validate is hash";
 	    my $vtor2;
 	    if (exists $vtor->{$key}) {
-		$vtor2=$vtor->{key}
+		$vtor2=$vtor->{$key}
 	    }
 	    elsif (exists $vtor->{__default}) {
 		$vtor2=$vtor->{__default}
@@ -155,7 +166,7 @@ __END__
 
 =head1 NAME
 
-Config::Properties::Simple - Perl extension to manage properties files.
+Config::Properties::Simple - Perl extension to manage configuration files.
 
 =head1 SYNOPSIS
 
@@ -180,7 +191,8 @@ Config::Properties::Simple - Perl extension to manage properties files.
                       $cfg->fail("$value is not odd");
                     $value } },
     defaults => { Foo => 1,
-                  MyHexProp => '0x45' });
+                  MyHexProp => '0x45' },
+    required => [qw( Foo )] );
 
 
 =head1 ABSTRACT
@@ -252,7 +264,11 @@ C<$value> (usually, just C<$value>) if it is good.
 
 =item C<validate =E<gt> \@array>
 
-only properties in C<@array> are allowed
+only properties in C<@array> are allowed. Regexp are also allowed
+inside de array. i.e.:
+
+   validate => [ qr/^Foo\.\w+$/, qw(Bar Doz) ],
+
 
 =item C<validate =E<gt> \%hash>
 
@@ -317,6 +333,12 @@ anything is ok.
 =back
 
 =back
+
+=item C<required =E<gt> [...]>
+
+properties that have to be included in the configuration file. When
+someone is missing, an exception is raised telling the user the
+reason.
 
 =back
 
