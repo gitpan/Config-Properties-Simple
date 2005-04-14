@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 use strict;
 use warnings;
@@ -412,8 +412,8 @@ method.
 creates a new configuration file with the properties defined in the
 object.
 
-C<%opts> are passed to Config::Find to determine the configuration
-file name and location.
+C<%opts> are passed to C<Config::Find-E<gt>find()> to determine the
+configuration file name and location.
 
 =item $this-E<gt>fail($error)
 
@@ -438,7 +438,7 @@ Salvador Fandiño, E<lt>sfandino@yahoo.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2003 by Salvador Fandiño
+Copyright 2003-2005 by Salvador Fandiño
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

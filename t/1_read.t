@@ -1,6 +1,6 @@
 # -*- Mode: Perl -*-
 
-use Test::More tests => 16;
+use Test::More tests => 19;
 BEGIN { use_ok('Config::Properties::Simple') };
 
 my $cfg1;
@@ -55,3 +55,10 @@ ok ($cfg9 && !$@, "load 9");
 is ($cfg9->getProperty('moc'), 'foo1', "alias 1");
 is ($cfg9->getProperty('bar'), 'bar2', "alias 2");
 is ($cfg9->getProperty('foo', 'def'), 'def', "alias 3");
+
+my $cfg10;
+eval { $cfg10=Config::Properties::Simple->new(file => 't/example2.props',
+					      defaults => $cfg7) };
+ok ($cfg10 && !$@, "cascade");
+is ($cfg10->getProperty('foo'), 'foo2', "cascade 2");
+is ($cfg10->getProperty('bar'), 'bar2', "cascade 3");

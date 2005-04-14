@@ -1,5 +1,19 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.11  Apr 15 2005
+	- typos on the docs corrected
+	- change log updated for 0.10!
+	- request Config::Properties 0.59 on Makefile.PL
+	- test passing Config::Properties objects for defaults.
+
+0.10  Apr 14 2005
+	- aliases support
+	- new tests for aliases
+	- accept any Config::Properties object for default
+	- optional > 1 makes file optional even when passed as 'file'
+	- new validate compatible with Config::Properties 0.59
+	
+
 0.09  Oct 10 2003
 	- find now uses options stored from object creation as
 	  defaults, so $cfg->find() returns effectively the filename
