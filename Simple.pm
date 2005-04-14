@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 use strict;
 use warnings;
@@ -320,9 +320,17 @@ calls the subroutine as
 
   &subroutine($key, $value, $cfg)
 
-subroutine should call C<$cfg-E<gt>fail($error)> if the pair
-C<$key>/C<$value> is not valid or return a normalized value for
-C<$value> (usually, just C<$value>) if it is good.
+subroutine should return a true value if the pair C<$key> C<$value> is
+valid or false otherwise. For customized error messages
+C<$cfg-E<gt>fail($error)> can be called.
+
+Both C<$key> and C<$value> can be modified manipulating the C<@_>
+array directly. Its sometimes useful to normalize the value, i.e.:
+
+  use Date::Manip;
+  sub validate_date { defined($_[1] = Date::Manip::ParseDate($_[1])) }
+  my $cfg = Config::Properties::Simple->new(validate => \&validate_date);
+
 
 =item C<validate =E<gt> \@array>
 
@@ -349,9 +357,7 @@ calls the subroutine as
 
   &subroutine($key, $value, $cfg)
 
-subroutine should call C<$cfg-E<gt>fail($error)> if the pair
-C<$key>/C<$value> is not valid or return a normalized value for
-C<$value> (usually, just C<$value>) if it is good.
+similar to passing a validating subrutine (explained before).
 
 =item C<\@array>
 

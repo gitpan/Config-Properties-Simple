@@ -1,5 +1,8 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.12  Apr 15 2005
+	- docs for validation subs updated!
+
 0.11  Apr 15 2005
 	- typos on the docs corrected
 	- change log updated for 0.10!
@@ -12,6 +15,9 @@ Revision history for Perl extension Config::Properties::Simple.
 	- accept any Config::Properties object for default
 	- optional > 1 makes file optional even when passed as 'file'
 	- new validate compatible with Config::Properties 0.59
+
+	INCOMPATIBILITY: validator subs handling has changed to allow
+	for modifing the keys
 	
 
 0.09  Oct 10 2003
