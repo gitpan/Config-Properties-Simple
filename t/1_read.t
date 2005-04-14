@@ -1,9 +1,11 @@
-use Test::More tests => 12;
+# -*- Mode: Perl -*-
+
+use Test::More tests => 16;
 BEGIN { use_ok('Config::Properties::Simple') };
 
 my $cfg1;
-eval { $cfg1=Config::Properties::Simple->new(file => 't/example1.props',
-					     defaults => { doo => 'hello' }) };
+eval {$cfg1=Config::Properties::Simple->new(file => 't/example1.props',
+					    defaults => { doo => 'hello' })};
 ok ($cfg1 && !$@, "reading");
 
 is($cfg1->getProperty('foo'), 'foo1', "read value");
@@ -45,3 +47,11 @@ eval { $cfg8=Config::Properties::Simple->new(file => 't/example1.props',
 					     validate => [qw(foo doo)]) };
 ok (!$cfg8 && $@, "validate array fail");
 
+undef $@;
+my $cfg9;
+eval { $cfg9=Config::Properties::Simple->new(file => 't/example1.props',
+					     aliases => { foo => 'moc' }) };
+ok ($cfg9 && !$@, "load 9");
+is ($cfg9->getProperty('moc'), 'foo1', "alias 1");
+is ($cfg9->getProperty('bar'), 'bar2', "alias 2");
+is ($cfg9->getProperty('foo', 'def'), 'def', "alias 3");

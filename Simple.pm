@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 use strict;
 use warnings;
@@ -18,9 +18,14 @@ sub new {
 
     my $defaults;
     if (defined $opts{defaults}) {
-	$defaults=Config::Properties->new();
-	for my $k (keys %{$opts{defaults}}) {
-	    $defaults->setProperty($k, $opts{defaults}->{$k})
+	if (UNIVERSAL::isa($opts{defaults}, 'Config::Properties')) {
+	    $defaults=$opts{defaults}
+	}
+	else {
+	    $defaults=Config::Properties->new();
+	    for my $k (keys %{$opts{defaults}}) {
+		$defaults->setProperty($k, $opts{defaults}->{$k})
+	    }
 	}
     }
 
@@ -35,8 +40,8 @@ sub new {
 	    or (exists $opts{mode} and $opts{mode}=~/^w(?:rite)?/i)) {
 	my $fn=$this->{simple_fn}=$this->find(%opts);
 	unless (defined $fn) {
-	    return $this if ($opts{optional} and !defined $opts{file})
-		or croak 'configuration file not found';
+	    return $this if ($opts{optional} and (!defined $opts{file} or $opts{optional} > 1));
+	    croak 'configuration file not found';
 	}
 	my $fh=IO::File->new($fn, "r");
 	unless ($fh) {
@@ -86,85 +91,120 @@ sub fail {
 }
 
 sub validate {
-    my ($this, $key, $value) = @_;
+    my $this = shift;
+    my $okey = $_[0];
+    $this->validate_1(@_);
+    my $oln=$this->_property_line_number($_[0]);
+    if (defined $oln
+	and !$this->{simple_opts}{dups_ok}) {
+	$this->fail($okey eq $_[0]
+		    ? "duplicated property '$okey' (previous appearance at line $oln)"
+		    : "duplicated property '$okey' (resolves to '$_[0]', previous appearance at line $oln)" )
+    }
+}
+
+sub validate_1 {
+    my $this = shift;
+    my $alias=$this->{simple_opts}{aliases};
+    if (defined $alias) {
+	$_[0]=$alias->{$_[0]} if exists $alias->{$_[0]};
+    }
     my $vtor=$this->{simple_opts}{validate};
     if (defined $vtor) {
 	my $fn=$this->{simple_fn};
 	if (UNIVERSAL::isa($vtor, 'CODE')) {
-	    return &$vtor($key, $value, $this);
+	    &$vtor(@_, $this) or $this->fail("invalid property '$_[0]' value '$_[1]'");
+	    return;
 	}
-	elsif (UNIVERSAL::isa($vtor, 'ARRAY')) {
+	if (UNIVERSAL::isa($vtor, 'ARRAY')) {
 	    foreach my $vtor2 (@{$vtor}) {
 		if (UNIVERSAL::isa($vtor2, 'Regexp')) {
-		    return $value if $key=~$vtor2;
+		    return if $_[0]=~$vtor2;
 		}
 		else {
-		    return $value if $vtor2 eq $key;
+		    return if $vtor2 eq $_[0];
 		}
 	    }
-	    $this->fail("unknow property '$key' found");
+	    $this->fail("unknown property '$_[0]' found");
 	}
-	elsif (UNIVERSAL::isa($vtor, 'HASH')) {
+	if (UNIVERSAL::isa($vtor, 'HASH')) {
 	    # warn "validate is hash";
 	    my $vtor2;
-	    if (exists $vtor->{$key}) {
-		$vtor2=$vtor->{$key}
+	    if (exists $vtor->{$_[0]}) {
+		$vtor2=$vtor->{$_[0]}
 	    }
 	    elsif (exists $vtor->{__default}) {
 		$vtor2=$vtor->{__default}
 	    }
 	    else {
-		$this->fail("unknow property '$key' found");
+		$this->fail("unknow property '$_[0]' found");
 	    }
 	    if (UNIVERSAL::isa($vtor2, 'CODE')) {
-		return &$vtor($key, $value, $this);
+		&$vtor(@_, $this) or $this->fail("invalid property '$_[0]' value '$_[1]'");
+		return;
 	    }
-	    elsif (UNIVERSAL::isa($vtor2, 'Regexp')) {
-		return $value if $value=~$vtor2;
-		$this->fail("property '$key' value '$value' is not allowed: it doesn't match regexp '$vtor2'");
+	    if (UNIVERSAL::isa($vtor2, 'Regexp')) {
+		return if $_[1]=~$vtor2;
+		$this->fail("property '$_[0]' value '$_[1]' not allowed: it doesn't match regexp '$vtor2'");
 	    }
-	    elsif (UNIVERSAL::isa($vtor2, 'ARRAY')) {
-		return $value if grep { $value eq $_} @{$vtor2};
-		$this->fail("property '$key' value '$value' is not allowed");
+	    if (UNIVERSAL::isa($vtor2, 'ARRAY')) {
+		return if (grep { $_[1] eq $_} @{$vtor2});
+		$this->fail("property '$_[0]' value '$_[1]' is not allowed");
 	    }
-	    elsif (UNIVERSAL::isa($vtor2, 'HASH')) {
-		return $vtor2->{$value} if exists $vtor2->{$value};
-		$this->fail("property '$key' value '$value' is not allowed");
+	    if (UNIVERSAL::isa($vtor2, 'HASH')) {
+		if (exists $vtor2->{$_[1]}) {
+		    $_[1]=$vtor->{$_[1]};
+		    return
+		}
+		$this->fail("property '$_[0]' value '$_[1]' is not allowed");
 	    }
-	    elsif ($vtor2=~/^s(?:tring)?$/i or $vtor2=~/^a(?:ny)?$/i) {
-		return $value;
+	    if ($vtor2=~/^s(?:tring)?$/i or $vtor2=~/^a(?:ny)?$/i) {
+		return;
 	    }
-	    elsif ($vtor2=~/^b(?:oolean)?$/i) {
-		return 1 if ( $value eq '1' or
-			      $value=~/^y(?:es)?$/i or
-			      $value=~/^t(?:rue)?$/i);
-		return 0 if ( $value eq '' or
-			      $value eq '0' or
-			      $value=~/^no?$/i or
-			      $value=~/^f(?:alse)?$/i);
-		$this->fail("property '$key' value '$value' is not allowed: boolean expected");
+	    if ($vtor2=~/^b(?:oolean)?$/i) {
+		if ( $_[1] eq '1' or
+		     $_[1]=~/^y(?:es)?$/i or
+		     $_[1]=~/^t(?:rue)?$/i) {
+		    $_[1]=1;
+		    return;
+		}
+		if ( $_[1] eq '' or
+		     $_[1] eq '0' or
+		     $_[1]=~/^no?$/i or
+		     $_[1]=~/^f(?:alse)?$/i) {
+		    $_[1]=0;
+		    return;
+		}
+		$this->fail("property '$_[0]' value '$_[1]' is not allowed: boolean expected");
 	    }
-	    elsif ($vtor2=~/^u(?:nsigned)?$/i) {
-		return int $1 if $value=~/^(\d+)$/;
-		$this->fail("property '$key' value '$value' is not allowed: unsigned integer expected");
+	    if ($vtor2=~/^u(?:nsigned)?$/i) {
+		if ($_[1]=~/^\d+$/) {
+		    $_[1]=int $_[1];
+		    return;
+		}
+		$this->fail("property '$_[0]' value '$_[1]' is not allowed: unsigned integer expected");
 	    }
-	    elsif ($vtor2=~/^i(?:nteger)?$/i) {
-		return int $1 if $value=~/^([+\-]?\d+)$/;
-		$this->fail("property '$key' value '$value' is not allowed: integer expected");
+	    if ($vtor2=~/^i(?:nteger)?$/i) {
+		if ($_[1]=~/^[+\-]?\d+$/) {
+		    $_[1]=int $_[1];
+		    return;
+		}
+		$this->fail("property '$_[0]' value '$_[1]' is not allowed: integer expected");
 	    }
-	    elsif ($vtor2=~/^f(?:loat)?$/i or $vtor2=~/^n(?:umber)?$/i) {
-		return 0+$1 if $value=~/^([+-]?(?:\d+|\d*\.\d+|\d+\.\d*)(?:[eE][+-]?\d+)?)$/;
-		$this->fail("property '$key' value '$value' is not allowed: number expected");
+	    if ($vtor2=~/^f(?:loat)?$/i or $vtor2=~/^n(?:umber)?$/i) {
+		if ($_[1]=~/^[+-]?(?:\d+|\d*\.\d+|\d+\.\d*)(?:[eE][+-]?\d+)?$/) {
+		    $_[1]=$_[1]+0;
+		    return;
+		}
+		$this->fail("property '$_[0]' value '$_[1]' is not allowed: number expected");
 	    }
-	    else {
-		croak "invalid object '$vtor2' for validate";
-	    }
+
+	    croak "invalid object '$vtor2' for validate";
 	}
 	else {
 	    croak "invalid object '$vtor' for validate";
 	}
     }
-    return $value;
 }
 
 1;
@@ -188,6 +228,7 @@ Config::Properties::Simple - Perl extension to manage configuration files.
     name => 'app/file',
     file => $opt_c,
     optional => 1,
+    aliases => { Fhoo => 'Foo', Bhar => 'Bar' },
     validate => { Foo => 'boolean',
                   MyHexProp => qr/^0x[0-9a-f]+$/i,
                   Odd => sub {
@@ -243,11 +284,26 @@ by default an exception is thrown when the configuration file can not
 be found or opened, this option makes the constructor succeed anyway.
 
 If the C<file> option is included and defined the constructor dies
-even with C<optional> set.
+unless C<optional> value is greater than 1. This is useful to let the
+user pass the configuration file name on the script command line when
+you want the script to fail if it's not found.
 
 =item C<format =E<gt> $format>
 
 equivalent to calling C<setFormat> method.
+
+=item C<dups_ok =E<gt> 1>
+
+by default, an error is reported when two similar keys are found on
+the same file, setting dups_ok causes previous values to be ignored
+instead.
+
+=item C<aliases =E<gt> { alias1 => key1, alias2 =>key2 ... }
+
+entries on the configuration file whose keys are found on the aliases
+hash are normalized to the corresponding key. Aliases only affect
+parsing and are not taken into account for default values or when
+getting or setting properties.
 
 =item C<validate =E<gt> ...>
 
