@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 use strict;
 use warnings;
@@ -44,6 +44,7 @@ sub new {
 	    croak 'configuration file not found';
 	}
 	my $fh=IO::File->new($fn, "r");
+	binmode $fh, ':utf8' if $this->{simple_opts}{utf8};
 	unless ($fh) {
 	    return $this if ($opts{optional} and !defined $opts{file})
 		or croak 'unable to open configuration file for reading';
@@ -78,6 +79,7 @@ sub save {
     my %opts= (%{$this->{simple_opts}}, mode => 'w', @_);
     my $fh=$this->open(%opts)
 	or croak 'unable to open configuration file for writing';
+    binmode $fh, ':utf8' if $this->{simple_opts}{utf8};
     my $header=$opts{header}
 	|| 'Automatically generated configuration file';
     $this->SUPER::save($fh, $header);
@@ -236,7 +238,7 @@ Config::Properties::Simple - Perl extension to manage configuration files.
                     $value = int $value;
                     $value & 1 or
                       $cfg->fail("$value is not odd");
-                    $value } },
+                    1 } },
     defaults => { Foo => 1,
                   MyHexProp => '0x45' },
     required => [qw( Foo )] );
@@ -277,6 +279,10 @@ C<Config::Properties::new> constructor).
 =item C<mode =E<gt> "write">
 
 stops properties for being read from a file.
+
+=item C<utf8 =>E<gt> 1>
+
+opens the file for reading/writing with the C<:utf8> layer.
 
 =item C<optional =E<gt> 1>
 

@@ -1,5 +1,8 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.13  Jun 27 2005
+	- add support for reading/writing utf8 files
+
 0.12  Apr 15 2005
 	- docs for validation subs updated!
 
