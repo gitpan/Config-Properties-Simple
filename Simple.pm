@@ -2,7 +2,7 @@ package Config::Properties::Simple;
 
 use 5.006;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 use strict;
 use warnings;
@@ -142,7 +142,7 @@ sub validate_1 {
 		$this->fail("unknow property '$_[0]' found");
 	    }
 	    if (UNIVERSAL::isa($vtor2, 'CODE')) {
-		&$vtor(@_, $this) or $this->fail("invalid property '$_[0]' value '$_[1]'");
+		&$vtor2(@_, $this) or $this->fail("invalid property '$_[0]' value '$_[1]'");
 		return;
 	    }
 	    if (UNIVERSAL::isa($vtor2, 'Regexp')) {

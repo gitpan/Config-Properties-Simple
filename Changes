@@ -1,5 +1,8 @@
 Revision history for Perl extension Config::Properties::Simple.
 
+0.14  Jun 30 2005
+	- corrected bug when validator sub inside hash used
+
 0.13  Jun 27 2005
 	- add support for reading/writing utf8 files
 
